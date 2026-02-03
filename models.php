@@ -17,6 +17,7 @@ $children = getAllChildren($pdo);
     <link rel="stylesheet" href="css/models.css">
 </head>
 <body>
+    
 
     <!-- Hero -->
     <section class="models-hero">
