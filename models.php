@@ -51,10 +51,12 @@ $children = getAllChildren($pdo);
                             <div class="m-card__info">
                                 <h2 class="m-card__name"><?= e($child['name']) ?></h2>
                                 <div class="m-card__details">
+                                    <?php if (!empty($child['age'])): ?>
                                     <div class="m-card__row">
                                         <span class="m-card__label">Возраст</span>
                                         <span class="m-card__value"><?= (int)$child['age'] ?> лет</span>
                                     </div>
+                                    <?php endif; ?>
                                     <div class="m-card__row">
                                         <span class="m-card__label">Рост</span>
                                         <span class="m-card__value"><?= (int)$child['height'] ?> см</span>

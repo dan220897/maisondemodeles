@@ -88,8 +88,8 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
                         <input type="text" name="name" class="adm-input" required>
                     </div>
                     <div class="adm-form-group">
-                        <label class="adm-label">Возраст *</label>
-                        <input type="number" name="age" class="adm-input" min="1" max="18" required>
+                        <label class="adm-label">Возраст</label>
+                        <input type="number" name="age" class="adm-input" min="1" max="18">
                     </div>
                     <div class="adm-form-group">
                         <label class="adm-label">Рост (см) *</label>
@@ -173,7 +173,7 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
                     </div>
                     <div class="adm-form-group">
                         <label class="adm-label">Возраст</label>
-                        <input type="number" name="age" id="editAge" class="adm-input" required>
+                        <input type="number" name="age" id="editAge" class="adm-input">
                     </div>
                     <div class="adm-form-group">
                         <label class="adm-label">Рост (см)</label>

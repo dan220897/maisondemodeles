@@ -13,7 +13,7 @@ $pdo->exec("
     CREATE TABLE IF NOT EXISTS children (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        age INT NOT NULL,
+        age INT DEFAULT NULL,
         height INT NOT NULL,
         params TEXT DEFAULT NULL,
         sort_order INT DEFAULT 0,

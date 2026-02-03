@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
         popupName.textContent = child.name;
         popupDetails.innerHTML = '';
 
-        addDetail('Возраст', child.age + ' лет');
+        if (child.age && parseInt(child.age) > 0) addDetail('Возраст', child.age + ' лет');
         addDetail('Рост', child.height + ' см');
         if (child.params) addDetail('Параметры', child.params);
 

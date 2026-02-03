@@ -72,7 +72,7 @@ if ($action === 'add_child') {
     $height = (int)($_POST['height'] ?? 0);
     $params = trim($_POST['params'] ?? '');
 
-    if ($name === '' || $age <= 0 || $height <= 0) {
+    if ($name === '' || $height <= 0) {
         echo json_encode(['success' => false, 'error' => 'Заполните обязательные поля']);
         exit;
     }
