@@ -50,7 +50,7 @@ button {
 
 /* === Models Hero === */
 .models-hero {
-    padding: 160px 40px 80px;
+    padding: 80px 40px 60px;
     text-align: center;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
@@ -883,89 +883,295 @@ button {
     color: #fff;
 }
 
-/* === Responsive === */
+/* === Responsive — Tablet === */
 @media (max-width: 768px) {
+    /* Hero */
+    .models-hero {
+        padding: 50px 20px 40px;
+    }
+
+    .models-hero__label {
+        font-size: 10px;
+        letter-spacing: 2px;
+        margin-bottom: 14px;
+    }
+
+    .models-hero__brand {
+        font-size: 2rem;
+        margin-bottom: 16px;
+    }
+
+    .models-hero__text {
+        font-size: 0.85rem;
+        letter-spacing: 0.3px;
+    }
+
+    /* Section */
+    .models-section {
+        padding: 40px 0 60px;
+    }
+
+    .models-container {
+        padding: 0 16px;
+    }
+
+    .models-grid {
+        gap: 24px;
+    }
+
+    /* Cards — vertical layout on mobile */
     .m-card {
         flex-direction: column-reverse;
         min-height: auto;
+        border-radius: 0;
+    }
+
+    .m-card:hover {
+        transform: none;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
     }
 
     .m-card__photo {
         flex: none;
         max-width: 100%;
-        aspect-ratio: 4/3;
-    }
-
-    .m-card__info {
-        padding: 32px 28px;
-    }
-
-    .m-card__name {
-        font-size: 1.6rem;
-    }
-
-    .models-hero {
-        padding: 120px 25px 60px;
-    }
-
-    .models-container {
-        padding: 0 25px;
-    }
-
-    .m-popup__content {
-        flex-direction: column;
-        padding: 70px 16px 24px;
-    }
-
-    .m-popup__info {
-        flex: none;
-        text-align: center;
-    }
-
-    .m-popup__name {
-        font-size: 1.5rem;
-        margin-bottom: 16px;
-    }
-
-    .m-popup__details {
-        flex-direction: row;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
-
-    .m-slider__btn--prev { left: 8px; }
-    .m-slider__btn--next { right: 8px; }
-
-    .adm-form-row {
-        grid-template-columns: 1fr;
-    }
-
-    .adm__header {
-        padding: 18px 20px;
-    }
-
-    .adm__form {
-        padding: 28px 20px;
-    }
-
-    .adm-child__header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 14px;
-    }
-}
-
-@media (max-width: 480px) {
-    .models-hero__brand {
-        font-size: 2rem;
+        aspect-ratio: 3/4;
     }
 
     .m-card__info {
         padding: 24px 20px;
     }
 
+    .m-card__name {
+        font-size: 1.4rem;
+        margin-bottom: 16px;
+    }
+
+    .m-card__details {
+        gap: 10px;
+    }
+
+    .m-card__label {
+        font-size: 10px;
+        min-width: 75px;
+        letter-spacing: 1.5px;
+    }
+
+    .m-card__value {
+        font-size: 14px;
+    }
+
+    /* Popup */
+    .m-popup__close {
+        top: 12px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.6rem;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .m-popup__content {
+        flex-direction: column;
+        padding: 0;
+        gap: 0;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .m-popup__info {
+        flex: none;
+        text-align: center;
+        padding: 60px 20px 20px;
+        width: 100%;
+    }
+
+    .m-popup__name {
+        font-size: 1.4rem;
+        margin-bottom: 12px;
+    }
+
+    .m-popup__details {
+        flex-direction: row;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .m-popup__detail-label {
+        font-size: 9px;
+    }
+
+    .m-popup__detail-value {
+        font-size: 14px;
+    }
+
+    /* Slider */
+    .m-popup__slider {
+        width: 100%;
+        max-width: 100%;
+        padding: 0 8px 20px;
+    }
+
+    .m-slider__slide {
+        aspect-ratio: 3/4;
+    }
+
+    .m-slider__btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1.4rem;
+    }
+
+    .m-slider__btn--prev { left: 6px; }
+    .m-slider__btn--next { right: 6px; }
+
+    .m-slider__dots {
+        margin-top: 16px;
+        gap: 8px;
+    }
+
+    .m-slider__dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    /* Admin */
+    .adm-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .adm__header {
+        padding: 16px 16px;
+        gap: 8px;
+    }
+
+    .adm__title {
+        font-size: 1rem;
+    }
+
+    .adm__back,
+    .adm__logout {
+        font-size: 11px;
+    }
+
+    .adm__section {
+        margin: 24px auto;
+        padding: 0 16px;
+    }
+
+    .adm__form {
+        padding: 24px 16px;
+    }
+
+    .adm-child {
+        padding: 20px 16px;
+    }
+
+    .adm-child__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .adm-child__actions {
+        width: 100%;
+    }
+
+    .adm-child__actions .adm-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .adm-thumb {
+        width: 80px;
+        height: 80px;
+    }
+
     .adm-modal__inner {
         padding: 30px 20px;
+    }
+
+    /* Toast */
+    .m-toast {
+        left: 16px;
+        right: 16px;
+        transform: translateX(0) translateY(100px);
+        text-align: center;
+    }
+
+    .m-toast--visible {
+        transform: translateX(0) translateY(0);
+    }
+}
+
+/* === Responsive — Small phones === */
+@media (max-width: 400px) {
+    .models-hero {
+        padding: 36px 16px 28px;
+    }
+
+    .models-hero__brand {
+        font-size: 1.6rem;
+    }
+
+    .models-hero__text {
+        font-size: 0.78rem;
+    }
+
+    .models-section {
+        padding: 24px 0 40px;
+    }
+
+    .models-container {
+        padding: 0 12px;
+    }
+
+    .models-grid {
+        gap: 16px;
+    }
+
+    .m-card__info {
+        padding: 20px 16px;
+    }
+
+    .m-card__name {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+
+    .m-card__label {
+        font-size: 9px;
+        min-width: 65px;
+    }
+
+    .m-card__value {
+        font-size: 13px;
+    }
+
+    .m-popup__info {
+        padding: 50px 16px 16px;
+    }
+
+    .m-popup__name {
+        font-size: 1.2rem;
+    }
+
+    .pin-box__pad {
+        gap: 10px;
+    }
+
+    .pin-btn {
+        width: 58px;
+        height: 58px;
+        font-size: 1.2rem;
+    }
+
+    .adm__form {
+        padding: 20px 12px;
+    }
+
+    .adm-btn {
+        padding: 12px 20px;
+        font-size: 11px;
     }
 }
