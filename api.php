@@ -65,11 +65,14 @@ if ($action === 'create_page') {
         exit;
     }
 
-    $slug = uniqueSlug($pdo, generateSlug($brandName));
-    $pdo->prepare("INSERT INTO pages (slug, brand_name, hero_text) VALUES (?, ?, ?)")
-        ->execute([$slug, $brandName, $heroText]);
-
-    echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId(), 'slug' => $slug]);
+    try {
+        $slug = uniqueSlug($pdo, generateSlug($brandName));
+        $pdo->prepare("INSERT INTO pages (slug, brand_name, hero_text) VALUES (?, ?, ?)")
+            ->execute([$slug, $brandName, $heroText]);
+        echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId(), 'slug' => $slug]);
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'error' => 'Ошибка БД: ' . $e->getMessage()]);
+    }
     exit;
 }
 
@@ -84,42 +87,53 @@ if ($action === 'update_page') {
         exit;
     }
 
-    if ($slug !== '') {
-        $slug = uniqueSlug($pdo, generateSlug($slug), $id);
-        $pdo->prepare("UPDATE pages SET brand_name = ?, hero_text = ?, slug = ? WHERE id = ?")
-            ->execute([$brandName, $heroText, $slug, $id]);
-    } else {
-        $pdo->prepare("UPDATE pages SET brand_name = ?, hero_text = ? WHERE id = ?")
-            ->execute([$brandName, $heroText, $id]);
+    try {
+        if ($slug !== '') {
+            $slug = uniqueSlug($pdo, generateSlug($slug), $id);
+            $pdo->prepare("UPDATE pages SET brand_name = ?, hero_text = ?, slug = ? WHERE id = ?")
+                ->execute([$brandName, $heroText, $slug, $id]);
+        } else {
+            $pdo->prepare("UPDATE pages SET brand_name = ?, hero_text = ? WHERE id = ?")
+                ->execute([$brandName, $heroText, $id]);
+        }
+        echo json_encode(['success' => true]);
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'error' => 'Ошибка БД: ' . $e->getMessage()]);
     }
-
-    echo json_encode(['success' => true]);
     exit;
 }
 
 if ($action === 'duplicate_page') {
     $id = (int)($_POST['id'] ?? 0);
-    $newId = duplicatePage($pdo, $id);
-    if ($newId) {
-        echo json_encode(['success' => true, 'id' => $newId]);
-    } else {
-        echo json_encode(['success' => false, 'error' => 'Страница не найдена']);
+    try {
+        $newId = duplicatePage($pdo, $id);
+        if ($newId) {
+            echo json_encode(['success' => true, 'id' => $newId]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Страница не найдена']);
+        }
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'error' => 'Ошибка БД: ' . $e->getMessage()]);
     }
     exit;
 }
 
 if ($action === 'delete_page') {
     $id = (int)($_POST['id'] ?? 0);
-    // Delete children photos first
-    $children = getChildrenByPage($pdo, $id);
-    foreach ($children as $child) {
-        foreach ($child['photos'] as $photo) {
-            $file = __DIR__ . '/uploads/' . $photo['filename'];
-            if (file_exists($file)) unlink($file);
+    try {
+        // Delete children photos first
+        $children = getChildrenByPage($pdo, $id);
+        foreach ($children as $child) {
+            foreach ($child['photos'] as $photo) {
+                $file = __DIR__ . '/uploads/' . $photo['filename'];
+                if (file_exists($file)) unlink($file);
+            }
         }
+        $pdo->prepare("DELETE FROM pages WHERE id = ?")->execute([$id]);
+        echo json_encode(['success' => true]);
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'error' => 'Ошибка БД: ' . $e->getMessage()]);
     }
-    $pdo->prepare("DELETE FROM pages WHERE id = ?")->execute([$id]);
-    echo json_encode(['success' => true]);
     exit;
 }
 
@@ -146,9 +160,19 @@ if ($action === 'add_child') {
         exit;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO children (page_id, name, age, height, params) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$pageId, $name, $age ?: null, $height, $params]);
-    $childId = (int)$pdo->lastInsertId();
+    try {
+        // Get next sort_order for this page
+        $maxSort = $pdo->prepare("SELECT COALESCE(MAX(sort_order), -1) + 1 FROM children WHERE page_id = ?");
+        $maxSort->execute([$pageId]);
+        $sortOrder = (int)$maxSort->fetchColumn();
+
+        $stmt = $pdo->prepare("INSERT INTO children (page_id, name, age, height, params, sort_order) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$pageId, $name, $age ?: null, $height, $params, $sortOrder]);
+        $childId = (int)$pdo->lastInsertId();
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'error' => 'Ошибка БД: ' . $e->getMessage()]);
+        exit;
+    }
 
     if (!empty($_FILES['photos'])) {
         $files = $_FILES['photos'];

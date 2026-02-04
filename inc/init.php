@@ -45,16 +45,14 @@ $pdo->exec("
 ");
 
 // Add page_id column if missing (migration for existing installs)
-try {
-    $pdo->exec("ALTER TABLE children ADD COLUMN page_id INT DEFAULT NULL AFTER id");
-} catch (PDOException $e) {
-    // Column already exists
-}
-
-try {
-    $pdo->exec("ALTER TABLE children ADD FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE");
-} catch (PDOException $e) {
-    // FK already exists
+$cols = $pdo->query("SHOW COLUMNS FROM children LIKE 'page_id'")->fetchAll();
+if (empty($cols)) {
+    try {
+        $pdo->exec("ALTER TABLE children ADD COLUMN page_id INT DEFAULT NULL AFTER id");
+        $pdo->exec("ALTER TABLE children ADD FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE");
+    } catch (PDOException $e) {
+        // Migration error, ignore
+    }
 }
 
 $stmt = $pdo->prepare("INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)");

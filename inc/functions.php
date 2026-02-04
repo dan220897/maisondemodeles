@@ -177,6 +177,6 @@ function duplicatePage(PDO $pdo, int $pageId): ?int {
     return $newPageId;
 }
 
-function e(string $str): string {
-    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+function e(?string $str): string {
+    return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
 }
