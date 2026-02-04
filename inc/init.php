@@ -44,6 +44,13 @@ $pdo->exec("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
+// Make age nullable (migration for existing installs)
+try {
+    $pdo->exec("ALTER TABLE children MODIFY COLUMN age INT DEFAULT NULL");
+} catch (PDOException $e) {
+    // Already nullable or other error
+}
+
 // Add page_id column if missing (migration for existing installs)
 $cols = $pdo->query("SHOW COLUMNS FROM children LIKE 'page_id'")->fetchAll();
 if (empty($cols)) {
