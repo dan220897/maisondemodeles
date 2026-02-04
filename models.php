@@ -31,12 +31,22 @@ $children = getAllChildren($pdo);
     <!-- Models Grid -->
     <section class="models-section">
         <div class="models-container">
+            <?php if (!empty($children)): ?>
+                <div class="models-view-toggle">
+                    <button class="view-btn view-btn--active" id="viewList" title="Список">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
+                    <button class="view-btn" id="viewGrid" title="Сетка">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    </button>
+                </div>
+            <?php endif; ?>
             <?php if (empty($children)): ?>
                 <div class="models-empty">
                     <p>Скоро здесь появятся наши модели</p>
                 </div>
             <?php else: ?>
-                <div class="models-grid">
+                <div class="models-grid" id="modelsGrid">
                     <?php foreach ($children as $child): ?>
                         <?php
                             $mainPhoto = null;

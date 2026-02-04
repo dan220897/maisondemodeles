@@ -131,6 +131,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }, { passive: true });
 
+    // === View toggle (list / grid) ===
+    var grid = document.getElementById('modelsGrid');
+    var btnList = document.getElementById('viewList');
+    var btnGrid = document.getElementById('viewGrid');
+
+    if (grid && btnList && btnGrid) {
+        var saved = localStorage.getItem('modelsView');
+        if (saved === 'grid') setView('grid');
+
+        btnList.addEventListener('click', function () { setView('list'); });
+        btnGrid.addEventListener('click', function () { setView('grid'); });
+
+        function setView(mode) {
+            if (mode === 'grid') {
+                grid.classList.add('models-grid--tiles');
+                btnGrid.classList.add('view-btn--active');
+                btnList.classList.remove('view-btn--active');
+            } else {
+                grid.classList.remove('models-grid--tiles');
+                btnList.classList.add('view-btn--active');
+                btnGrid.classList.remove('view-btn--active');
+            }
+            localStorage.setItem('modelsView', mode);
+        }
+    }
+
     // Scroll animation for cards
     var observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {

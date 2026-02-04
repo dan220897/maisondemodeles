@@ -100,10 +100,79 @@ button {
     padding: 0 40px;
 }
 
+/* View Toggle */
+.models-view-toggle {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-bottom: 32px;
+}
+
+.view-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.view-btn:hover {
+    border-color: var(--border-hover);
+    color: var(--text-muted);
+}
+
+.view-btn--active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+}
+
+/* List Mode (default) */
 .models-grid {
     display: flex;
     flex-direction: column;
     gap: 40px;
+}
+
+/* Grid Mode */
+.models-grid--tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.models-grid--tiles .m-card {
+    flex-direction: column-reverse;
+    min-height: auto;
+}
+
+.models-grid--tiles .m-card__photo {
+    flex: none;
+    max-width: 100%;
+    aspect-ratio: 3/4;
+}
+
+.models-grid--tiles .m-card__info {
+    padding: 24px 20px;
+}
+
+.models-grid--tiles .m-card__name {
+    font-size: 1.3rem;
+    margin-bottom: 14px;
+}
+
+.models-grid--tiles .m-card__label {
+    font-size: 10px;
+    min-width: 70px;
+}
+
+.models-grid--tiles .m-card__value {
+    font-size: 13px;
 }
 
 .models-empty {
@@ -965,6 +1034,15 @@ button {
         gap: 24px;
     }
 
+    .models-grid--tiles {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .models-view-toggle {
+        margin-bottom: 20px;
+    }
+
     /* Cards — vertical layout on mobile */
     .m-card {
         flex-direction: column-reverse;
@@ -1153,6 +1231,18 @@ button {
 
 /* === Responsive — Small phones === */
 @media (max-width: 400px) {
+    .models-grid--tiles {
+        grid-template-columns: 1fr;
+    }
+
+    .models-grid--tiles .m-card__info {
+        padding: 16px 14px;
+    }
+
+    .models-grid--tiles .m-card__name {
+        font-size: 1.1rem;
+    }
+
     .models-hero {
         padding: 36px 16px 28px;
     }
