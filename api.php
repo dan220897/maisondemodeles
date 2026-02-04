@@ -170,4 +170,53 @@ if ($action === 'logout') {
     exit;
 }
 
+if ($action === 'reorder_child') {
+    $id = (int)($_POST['id'] ?? 0);
+    $direction = $_POST['direction'] ?? '';
+
+    if ($id <= 0 || !in_array($direction, ['up', 'down'])) {
+        echo json_encode(['success' => false, 'error' => 'Неверные данные']);
+        exit;
+    }
+
+    $current = $pdo->prepare("SELECT id, sort_order FROM children WHERE id = ?");
+    $current->execute([$id]);
+    $currentChild = $current->fetch();
+    if (!$currentChild) {
+        echo json_encode(['success' => false, 'error' => 'Не найден']);
+        exit;
+    }
+
+    $currentOrder = (int)$currentChild['sort_order'];
+
+    if ($direction === 'up') {
+        $neighbor = $pdo->prepare("SELECT id, sort_order FROM children WHERE sort_order < ? ORDER BY sort_order DESC, id DESC LIMIT 1");
+        $neighbor->execute([$currentOrder]);
+    } else {
+        $neighbor = $pdo->prepare("SELECT id, sort_order FROM children WHERE sort_order > ? ORDER BY sort_order ASC, id ASC LIMIT 1");
+        $neighbor->execute([$currentOrder]);
+    }
+
+    $neighborChild = $neighbor->fetch();
+
+    if ($neighborChild) {
+        $neighborOrder = (int)$neighborChild['sort_order'];
+        if ($neighborOrder === $currentOrder) {
+            // Same sort_order, assign distinct values
+            if ($direction === 'up') {
+                $pdo->prepare("UPDATE children SET sort_order = sort_order - 1 WHERE id = ?")->execute([$id]);
+            } else {
+                $pdo->prepare("UPDATE children SET sort_order = sort_order + 1 WHERE id = ?")->execute([$id]);
+            }
+        } else {
+            $pdo->prepare("UPDATE children SET sort_order = ? WHERE id = ?")->execute([$neighborOrder, $id]);
+            $pdo->prepare("UPDATE children SET sort_order = ? WHERE id = ?")->execute([$currentOrder, $neighborChild['id']]);
+        }
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Нельзя переместить']);
+    }
+    exit;
+}
+
 echo json_encode(['success' => false, 'error' => 'Неизвестное действие']);

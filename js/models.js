@@ -4,13 +4,13 @@ document.addEventListener('DOMContentLoaded', function () {
     var popupClose = document.getElementById('mPopupClose');
     var popupName = document.getElementById('mPopupName');
     var popupDetails = document.getElementById('mPopupDetails');
-    var sliderTrack = document.getElementById('mSliderTrack');
-    var sliderDots = document.getElementById('mSliderDots');
-    var sliderPrev = document.getElementById('mSliderPrev');
-    var sliderNext = document.getElementById('mSliderNext');
+    var galleryMain = document.getElementById('mGalleryMain');
+    var galleryThumbs = document.getElementById('mGalleryThumbs');
+    var galleryPrev = document.getElementById('mGalleryPrev');
+    var galleryNext = document.getElementById('mGalleryNext');
 
-    var currentSlide = 0;
-    var totalSlides = 0;
+    var currentIndex = 0;
+    var currentPhotos = [];
 
     // Card click
     document.querySelectorAll('.m-card').forEach(function (card) {
@@ -29,36 +29,57 @@ document.addEventListener('DOMContentLoaded', function () {
         addDetail('Рост', child.height + ' см');
         if (child.params) addDetail('Параметры', child.params);
 
-        sliderTrack.innerHTML = '';
-        sliderDots.innerHTML = '';
+        currentPhotos = child.photos || [];
+        galleryThumbs.innerHTML = '';
 
-        var photos = child.photos || [];
-        if (photos.length === 0) {
-            sliderTrack.innerHTML = '<div class="m-slider__slide" style="display:flex;align-items:center;justify-content:center;color:#8a8a8a;">Нет фотографий</div>';
-            totalSlides = 0;
+        if (currentPhotos.length === 0) {
+            galleryMain.style.display = 'none';
+            galleryPrev.style.display = 'none';
+            galleryNext.style.display = 'none';
+            galleryThumbs.innerHTML = '<div style="text-align:center;color:#8a8a8a;padding:40px;">Нет фотографий</div>';
         } else {
-            photos.forEach(function (photo, i) {
-                var slide = document.createElement('div');
-                slide.className = 'm-slider__slide';
-                slide.innerHTML = '<img src="uploads/' + esc(photo.filename) + '" alt="">';
-                sliderTrack.appendChild(slide);
+            galleryMain.style.display = 'block';
+            galleryPrev.style.display = '';
+            galleryNext.style.display = '';
 
-                var dot = document.createElement('span');
-                dot.className = 'm-slider__dot' + (i === 0 ? ' m-slider__dot--active' : '');
-                dot.addEventListener('click', function () { goToSlide(i); });
-                sliderDots.appendChild(dot);
+            currentPhotos.forEach(function (photo, i) {
+                var thumb = document.createElement('div');
+                thumb.className = 'm-gallery__thumb' + (i === 0 ? ' m-gallery__thumb--active' : '');
+                thumb.innerHTML = '<img src="uploads/' + esc(photo.filename) + '" alt="">';
+                thumb.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    goToPhoto(i);
+                });
+                galleryThumbs.appendChild(thumb);
             });
-            totalSlides = photos.length;
-        }
 
-        currentSlide = 0;
-        updateSlider();
+            currentIndex = 0;
+            updateGallery();
+        }
 
         popup.classList.add('m-popup--active');
         document.body.style.overflow = 'hidden';
         requestAnimationFrame(function () {
             popup.classList.add('m-popup--visible');
         });
+    }
+
+    function goToPhoto(index) {
+        if (currentPhotos.length === 0) return;
+        currentIndex = Math.max(0, Math.min(index, currentPhotos.length - 1));
+        updateGallery();
+    }
+
+    function updateGallery() {
+        galleryMain.src = 'uploads/' + currentPhotos[currentIndex].filename;
+        var thumbs = galleryThumbs.querySelectorAll('.m-gallery__thumb');
+        thumbs.forEach(function (t, i) {
+            t.classList.toggle('m-gallery__thumb--active', i === currentIndex);
+        });
+        // Scroll active thumb into view
+        if (thumbs[currentIndex]) {
+            thumbs[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
     }
 
     function addDetail(label, value) {
@@ -76,41 +97,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 400);
     }
 
-    function goToSlide(index) {
-        if (totalSlides === 0) return;
-        currentSlide = Math.max(0, Math.min(index, totalSlides - 1));
-        updateSlider();
-    }
-
-    function updateSlider() {
-        sliderTrack.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
-        sliderDots.querySelectorAll('.m-slider__dot').forEach(function (dot, i) {
-            dot.classList.toggle('m-slider__dot--active', i === currentSlide);
-        });
-    }
-
+    // Events
     popupClose.addEventListener('click', closePopup);
     popup.addEventListener('click', function (e) { if (e.target === popup) closePopup(); });
-    sliderPrev.addEventListener('click', function (e) { e.stopPropagation(); goToSlide(currentSlide - 1); });
-    sliderNext.addEventListener('click', function (e) { e.stopPropagation(); goToSlide(currentSlide + 1); });
+
+    galleryPrev.addEventListener('click', function (e) {
+        e.stopPropagation();
+        goToPhoto(currentIndex - 1);
+    });
+
+    galleryNext.addEventListener('click', function (e) {
+        e.stopPropagation();
+        goToPhoto(currentIndex + 1);
+    });
 
     document.addEventListener('keydown', function (e) {
         if (!popup.classList.contains('m-popup--active')) return;
         if (e.key === 'Escape') closePopup();
-        if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
-        if (e.key === 'ArrowRight') goToSlide(currentSlide + 1);
+        if (e.key === 'ArrowLeft') goToPhoto(currentIndex - 1);
+        if (e.key === 'ArrowRight') goToPhoto(currentIndex + 1);
     });
 
-    // Touch swipe
+    // Touch swipe on main image
     var touchX = 0;
-    sliderTrack.addEventListener('touchstart', function (e) {
+    galleryMain.addEventListener('touchstart', function (e) {
         touchX = e.changedTouches[0].screenX;
     }, { passive: true });
 
-    sliderTrack.addEventListener('touchend', function (e) {
+    galleryMain.addEventListener('touchend', function (e) {
         var diff = touchX - e.changedTouches[0].screenX;
         if (Math.abs(diff) > 50) {
-            goToSlide(diff > 0 ? currentSlide + 1 : currentSlide - 1);
+            goToPhoto(diff > 0 ? currentIndex + 1 : currentIndex - 1);
         }
     }, { passive: true });
 

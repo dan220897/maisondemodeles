@@ -88,7 +88,7 @@ $children = getAllChildren($pdo);
         </div>
     </section>
 
-    <!-- Popup Slider -->
+    <!-- Popup Gallery -->
     <div class="m-popup" id="mPopup">
         <button class="m-popup__close" id="mPopupClose">&times;</button>
         <div class="m-popup__content">
@@ -96,13 +96,13 @@ $children = getAllChildren($pdo);
                 <h2 class="m-popup__name" id="mPopupName"></h2>
                 <div class="m-popup__details" id="mPopupDetails"></div>
             </div>
-            <div class="m-popup__slider">
-                <div class="m-slider" id="mSlider">
-                    <div class="m-slider__track" id="mSliderTrack"></div>
+            <div class="m-popup__gallery">
+                <div class="m-gallery__main">
+                    <img id="mGalleryMain" src="" alt="">
+                    <button class="m-gallery__nav m-gallery__nav--prev" id="mGalleryPrev">&#8249;</button>
+                    <button class="m-gallery__nav m-gallery__nav--next" id="mGalleryNext">&#8250;</button>
                 </div>
-                <button class="m-slider__btn m-slider__btn--prev" id="mSliderPrev">&#8249;</button>
-                <button class="m-slider__btn m-slider__btn--next" id="mSliderNext">&#8250;</button>
-                <div class="m-slider__dots" id="mSliderDots"></div>
+                <div class="m-gallery__thumbs" id="mGalleryThumbs"></div>
             </div>
         </div>
     </div>

@@ -200,6 +200,28 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     };
 
+    // === Reorder Child ===
+    window.moveChild = function (id, direction) {
+        var fd = new FormData();
+        fd.append('action', 'reorder_child');
+        fd.append('id', id);
+        fd.append('direction', direction);
+        fetch('api.php', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Swap DOM elements
+                    var card = document.querySelector('.adm-child[data-id="' + id + '"]');
+                    if (!card) return;
+                    if (direction === 'up' && card.previousElementSibling) {
+                        card.parentNode.insertBefore(card, card.previousElementSibling);
+                    } else if (direction === 'down' && card.nextElementSibling) {
+                        card.parentNode.insertBefore(card.nextElementSibling, card);
+                    }
+                }
+            });
+    };
+
     // === Edit Child ===
     var editModal = document.getElementById('editModal');
 

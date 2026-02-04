@@ -125,6 +125,10 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
                     <?php foreach ($children as $child): ?>
                         <div class="adm-child" data-id="<?= $child['id'] ?>">
                             <div class="adm-child__header">
+                                <div class="adm-child__order">
+                                    <button class="adm-order-btn" onclick="moveChild(<?= $child['id'] ?>, 'up')" title="Вверх">&#9650;</button>
+                                    <button class="adm-order-btn" onclick="moveChild(<?= $child['id'] ?>, 'down')" title="Вниз">&#9660;</button>
+                                </div>
                                 <div class="adm-child__info">
                                     <h3><?= e($child['name']) ?></h3>
                                     <span><?= (int)$child['age'] ?> лет, <?= (int)$child['height'] ?> см</span>
