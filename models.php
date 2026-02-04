@@ -2,9 +2,24 @@
 require_once __DIR__ . '/inc/init.php';
 require_once __DIR__ . '/inc/functions.php';
 
-$brandName = getSetting($pdo, 'brand_name');
-$heroText = getSetting($pdo, 'hero_text');
-$children = getAllChildren($pdo);
+$slug = trim($_GET['page'] ?? '');
+if ($slug !== '') {
+    $page = getPageBySlug($pdo, $slug);
+} else {
+    // Default: first page
+    $pages = getAllPages($pdo);
+    $page = !empty($pages) ? $pages[0] : null;
+}
+
+if (!$page) {
+    http_response_code(404);
+    echo '<h1 style="text-align:center;margin-top:100px;">Страница не найдена</h1>';
+    exit;
+}
+
+$brandName = $page['brand_name'];
+$heroText = $page['hero_text'];
+$children = getChildrenByPage($pdo, (int)$page['id']);
 ?>
 <!DOCTYPE html>
 <html lang="ru">

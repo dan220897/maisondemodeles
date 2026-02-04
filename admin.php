@@ -4,17 +4,29 @@ require_once __DIR__ . '/inc/init.php';
 require_once __DIR__ . '/inc/functions.php';
 
 $isAdmin = !empty($_SESSION['admin']);
-$brandName = getSetting($pdo, 'brand_name');
-$heroText = getSetting($pdo, 'hero_text');
 $pinCode = getSetting($pdo, 'pin_code');
-$children = $isAdmin ? getAllChildren($pdo) : [];
+$pages = $isAdmin ? getAllPages($pdo) : [];
+$currentPageId = (int)($_GET['page_id'] ?? 0);
+$currentPage = null;
+$children = [];
+
+if ($isAdmin && $currentPageId > 0) {
+    $currentPage = getPageById($pdo, $currentPageId);
+    if ($currentPage) {
+        $children = getChildrenByPage($pdo, $currentPageId);
+    }
+} elseif ($isAdmin && !empty($pages)) {
+    $currentPage = $pages[0];
+    $currentPageId = (int)$currentPage['id'];
+    $children = getChildrenByPage($pdo, $currentPageId);
+}
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ — <?= e($brandName) ?></title>
+    <title>Админ — Панель управления</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/models.css">
@@ -24,7 +36,7 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
     <!-- PIN Lock -->
     <div class="pin-screen <?= $isAdmin ? 'pin-screen--hidden' : '' ?>" id="pinScreen">
         <div class="pin-box">
-            <div class="pin-box__logo"><?= e($brandName) ?></div>
+            <div class="pin-box__logo">Maison de Modèles</div>
             <p class="pin-box__label">Введите пин-код</p>
             <div class="pin-box__dots" id="pinDots">
                 <span class="pin-dot"></span>
@@ -63,14 +75,6 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
             <h2 class="adm__section-title">Настройки</h2>
             <form class="adm__form" id="settingsForm">
                 <div class="adm-form-group">
-                    <label class="adm-label">Название бренда</label>
-                    <input type="text" name="brand_name" class="adm-input" value="<?= e($brandName) ?>">
-                </div>
-                <div class="adm-form-group">
-                    <label class="adm-label">Текст на странице моделей</label>
-                    <input type="text" name="hero_text" class="adm-input" value="<?= e($heroText) ?>">
-                </div>
-                <div class="adm-form-group">
                     <label class="adm-label">Пин-код (4 цифры)</label>
                     <input type="text" name="pin_code" class="adm-input" value="<?= e($pinCode) ?>" maxlength="4" pattern="\d{4}">
                 </div>
@@ -78,10 +82,55 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
             </form>
         </section>
 
-        <!-- Add Child -->
+        <!-- Pages Management -->
         <section class="adm__section">
-            <h2 class="adm__section-title">Добавить модель</h2>
+            <h2 class="adm__section-title">Страницы</h2>
+
+            <!-- Create Page Form -->
+            <form class="adm__form adm-pages__create" id="createPageForm">
+                <div class="adm-form-row adm-form-row--2col">
+                    <div class="adm-form-group">
+                        <label class="adm-label">Название бренда *</label>
+                        <input type="text" name="brand_name" class="adm-input" required placeholder="Например: Zara Kids">
+                    </div>
+                    <div class="adm-form-group">
+                        <label class="adm-label">Текст на странице</label>
+                        <input type="text" name="hero_text" class="adm-input" placeholder="Описание для клиента">
+                    </div>
+                </div>
+                <button type="submit" class="adm-btn adm-btn--primary">Создать страницу</button>
+            </form>
+
+            <!-- Pages List -->
+            <div class="adm-pages__list" id="pagesList">
+                <?php if (empty($pages)): ?>
+                    <p class="adm__empty">Нет страниц. Создайте первую!</p>
+                <?php else: ?>
+                    <?php foreach ($pages as $p): ?>
+                        <div class="adm-page-card <?= (int)$p['id'] === $currentPageId ? 'adm-page-card--active' : '' ?>" data-id="<?= $p['id'] ?>">
+                            <div class="adm-page-card__info" onclick="selectPage(<?= $p['id'] ?>)">
+                                <h3 class="adm-page-card__name"><?= e($p['brand_name']) ?></h3>
+                                <span class="adm-page-card__slug">models.php?page=<?= e($p['slug']) ?></span>
+                            </div>
+                            <div class="adm-page-card__actions">
+                                <button class="adm-btn adm-btn--small adm-btn--edit" onclick="editPage(<?= $p['id'] ?>)" title="Редактировать">Изменить</button>
+                                <button class="adm-btn adm-btn--small adm-btn--edit" onclick="duplicatePage(<?= $p['id'] ?>)" title="Дублировать">Копия</button>
+                                <button class="adm-btn adm-btn--small adm-btn--danger" onclick="deletePage(<?= $p['id'] ?>)" title="Удалить">Удалить</button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <?php if ($currentPage): ?>
+        <!-- Current Page Children -->
+        <section class="adm__section">
+            <h2 class="adm__section-title">Модели — <?= e($currentPage['brand_name']) ?></h2>
+
+            <!-- Add Child -->
             <form class="adm__form" id="addChildForm" enctype="multipart/form-data">
+                <input type="hidden" name="page_id" value="<?= $currentPageId ?>">
                 <div class="adm-form-row">
                     <div class="adm-form-group">
                         <label class="adm-label">Имя *</label>
@@ -115,12 +164,12 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
             </form>
         </section>
 
-        <!-- List -->
+        <!-- Children List -->
         <section class="adm__section">
-            <h2 class="adm__section-title">Модели</h2>
+            <h2 class="adm__section-title">Список моделей</h2>
             <div class="adm__list" id="childrenList">
                 <?php if (empty($children)): ?>
-                    <p class="adm__empty">Пока нет моделей. Добавьте первую!</p>
+                    <p class="adm__empty">Пока нет моделей на этой странице. Добавьте первую!</p>
                 <?php else: ?>
                     <?php foreach ($children as $child): ?>
                         <div class="adm-child" data-id="<?= $child['id'] ?>">
@@ -131,7 +180,7 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
                                 </div>
                                 <div class="adm-child__info">
                                     <h3><?= e($child['name']) ?></h3>
-                                    <span><?= (int)$child['age'] ?> лет, <?= (int)$child['height'] ?> см</span>
+                                    <span><?= !empty($child['age']) ? (int)$child['age'] . ' лет, ' : '' ?><?= (int)$child['height'] ?> см</span>
                                     <?php if ($child['params']): ?>
                                         <span class="adm-child__params"><?= e($child['params']) ?></span>
                                     <?php endif; ?>
@@ -161,9 +210,10 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
                 <?php endif; ?>
             </div>
         </section>
+        <?php endif; ?>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- Edit Child Modal -->
     <div class="adm-modal" id="editModal">
         <div class="adm-modal__inner">
             <button class="adm-modal__close" onclick="closeEditModal()">&times;</button>
@@ -197,8 +247,33 @@ $children = $isAdmin ? getAllChildren($pdo) : [];
         </div>
     </div>
 
+    <!-- Edit Page Modal -->
+    <div class="adm-modal" id="editPageModal">
+        <div class="adm-modal__inner">
+            <button class="adm-modal__close" onclick="closeEditPageModal()">&times;</button>
+            <h2>Редактировать страницу</h2>
+            <form id="editPageForm">
+                <input type="hidden" name="id" id="editPageId">
+                <div class="adm-form-group">
+                    <label class="adm-label">Название бренда</label>
+                    <input type="text" name="brand_name" id="editPageBrand" class="adm-input" required>
+                </div>
+                <div class="adm-form-group">
+                    <label class="adm-label">Текст на странице</label>
+                    <input type="text" name="hero_text" id="editPageHero" class="adm-input">
+                </div>
+                <div class="adm-form-group">
+                    <label class="adm-label">URL-slug</label>
+                    <input type="text" name="slug" id="editPageSlug" class="adm-input" placeholder="Оставьте пустым для автогенерации">
+                </div>
+                <button type="submit" class="adm-btn adm-btn--primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         var IS_ADMIN = <?= $isAdmin ? 'true' : 'false' ?>;
+        var CURRENT_PAGE_ID = <?= $currentPageId ?>;
     </script>
     <script src="js/admin.js"></script>
 </body>

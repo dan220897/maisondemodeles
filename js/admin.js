@@ -85,6 +85,118 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // === Create Page ===
+    var createPageForm = document.getElementById('createPageForm');
+    if (createPageForm) {
+        createPageForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var fd = new FormData(createPageForm);
+            fd.append('action', 'create_page');
+            fetch('api.php', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        showToast('Страница создана');
+                        setTimeout(function () {
+                            location.href = 'admin.php?page_id=' + data.id;
+                        }, 800);
+                    } else {
+                        showToast(data.error || 'Ошибка', true);
+                    }
+                });
+        });
+    }
+
+    // === Page Actions ===
+    window.selectPage = function (id) {
+        location.href = 'admin.php?page_id=' + id;
+    };
+
+    window.duplicatePage = function (id) {
+        if (!confirm('Дублировать эту страницу со всеми моделями?')) return;
+        var fd = new FormData();
+        fd.append('action', 'duplicate_page');
+        fd.append('id', id);
+        fetch('api.php', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    showToast('Страница дублирована');
+                    setTimeout(function () {
+                        location.href = 'admin.php?page_id=' + data.id;
+                    }, 800);
+                } else {
+                    showToast(data.error || 'Ошибка', true);
+                }
+            });
+    };
+
+    window.deletePage = function (id) {
+        if (!confirm('Удалить эту страницу и всех её моделей? Это действие нельзя отменить.')) return;
+        var fd = new FormData();
+        fd.append('action', 'delete_page');
+        fd.append('id', id);
+        fetch('api.php', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    showToast('Страница удалена');
+                    setTimeout(function () {
+                        location.href = 'admin.php';
+                    }, 800);
+                } else {
+                    showToast(data.error || 'Ошибка', true);
+                }
+            });
+    };
+
+    // === Edit Page Modal ===
+    var editPageModal = document.getElementById('editPageModal');
+
+    window.editPage = function (id) {
+        fetch('api.php?action=get_pages')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) return;
+                var page = data.pages.find(function (p) { return p.id == id; });
+                if (!page) return;
+                document.getElementById('editPageId').value = page.id;
+                document.getElementById('editPageBrand').value = page.brand_name;
+                document.getElementById('editPageHero').value = page.hero_text || '';
+                document.getElementById('editPageSlug').value = page.slug;
+                editPageModal.classList.add('adm-modal--active');
+            });
+    };
+
+    window.closeEditPageModal = function () {
+        editPageModal.classList.remove('adm-modal--active');
+    };
+
+    if (editPageModal) {
+        editPageModal.addEventListener('click', function (e) {
+            if (e.target === editPageModal) closeEditPageModal();
+        });
+    }
+
+    var editPageForm = document.getElementById('editPageForm');
+    if (editPageForm) {
+        editPageForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var fd = new FormData(editPageForm);
+            fd.append('action', 'update_page');
+            fetch('api.php', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        showToast('Страница обновлена');
+                        setTimeout(function () { location.reload(); }, 800);
+                    } else {
+                        showToast(data.error || 'Ошибка', true);
+                    }
+                });
+        });
+    }
+
     // === Add Child ===
     var addForm = document.getElementById('addChildForm');
     if (addForm) {
@@ -233,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var c = data.child;
                 document.getElementById('editId').value = c.id;
                 document.getElementById('editName').value = c.name;
-                document.getElementById('editAge').value = c.age;
+                document.getElementById('editAge').value = c.age || '';
                 document.getElementById('editHeight').value = c.height;
                 document.getElementById('editParams').value = c.params || '';
                 editModal.classList.add('adm-modal--active');
@@ -244,9 +356,11 @@ document.addEventListener('DOMContentLoaded', function () {
         editModal.classList.remove('adm-modal--active');
     };
 
-    editModal.addEventListener('click', function (e) {
-        if (e.target === editModal) closeEditModal();
-    });
+    if (editModal) {
+        editModal.addEventListener('click', function (e) {
+            if (e.target === editModal) closeEditModal();
+        });
+    }
 
     var editForm = document.getElementById('editChildForm');
     if (editForm) {

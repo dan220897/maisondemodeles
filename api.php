@@ -9,7 +9,13 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // Public actions
 if ($action === 'get_children') {
-    echo json_encode(['success' => true, 'children' => getAllChildren($pdo)]);
+    $pageId = (int)($_GET['page_id'] ?? 0);
+    if ($pageId > 0) {
+        $children = getChildrenByPage($pdo, $pageId);
+    } else {
+        $children = getAllChildren($pdo);
+    }
+    echo json_encode(['success' => true, 'children' => $children]);
     exit;
 }
 
@@ -24,12 +30,8 @@ if ($action === 'get_child') {
     exit;
 }
 
-if ($action === 'get_settings') {
-    echo json_encode([
-        'success' => true,
-        'brand_name' => getSetting($pdo, 'brand_name'),
-        'hero_text' => getSetting($pdo, 'hero_text'),
-    ]);
+if ($action === 'get_pages') {
+    echo json_encode(['success' => true, 'pages' => getAllPages($pdo)]);
     exit;
 }
 
@@ -52,33 +54,100 @@ if (empty($_SESSION['admin'])) {
     exit;
 }
 
-// Admin actions
-if ($action === 'save_settings') {
-    $brand = $_POST['brand_name'] ?? '';
-    $hero = $_POST['hero_text'] ?? '';
-    $pin = $_POST['pin_code'] ?? '';
+// === Page management ===
 
-    if ($brand !== '') setSetting($pdo, 'brand_name', $brand);
-    if ($hero !== '') setSetting($pdo, 'hero_text', $hero);
-    if ($pin !== '') setSetting($pdo, 'pin_code', $pin);
+if ($action === 'create_page') {
+    $brandName = trim($_POST['brand_name'] ?? '');
+    $heroText = trim($_POST['hero_text'] ?? '');
+
+    if ($brandName === '') {
+        echo json_encode(['success' => false, 'error' => 'Укажите название бренда']);
+        exit;
+    }
+
+    $slug = uniqueSlug($pdo, generateSlug($brandName));
+    $pdo->prepare("INSERT INTO pages (slug, brand_name, hero_text) VALUES (?, ?, ?)")
+        ->execute([$slug, $brandName, $heroText]);
+
+    echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId(), 'slug' => $slug]);
+    exit;
+}
+
+if ($action === 'update_page') {
+    $id = (int)($_POST['id'] ?? 0);
+    $brandName = trim($_POST['brand_name'] ?? '');
+    $heroText = trim($_POST['hero_text'] ?? '');
+    $slug = trim($_POST['slug'] ?? '');
+
+    if ($id <= 0 || $brandName === '') {
+        echo json_encode(['success' => false, 'error' => 'Неверные данные']);
+        exit;
+    }
+
+    if ($slug !== '') {
+        $slug = uniqueSlug($pdo, generateSlug($slug), $id);
+        $pdo->prepare("UPDATE pages SET brand_name = ?, hero_text = ?, slug = ? WHERE id = ?")
+            ->execute([$brandName, $heroText, $slug, $id]);
+    } else {
+        $pdo->prepare("UPDATE pages SET brand_name = ?, hero_text = ? WHERE id = ?")
+            ->execute([$brandName, $heroText, $id]);
+    }
 
     echo json_encode(['success' => true]);
     exit;
 }
 
+if ($action === 'duplicate_page') {
+    $id = (int)($_POST['id'] ?? 0);
+    $newId = duplicatePage($pdo, $id);
+    if ($newId) {
+        echo json_encode(['success' => true, 'id' => $newId]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Страница не найдена']);
+    }
+    exit;
+}
+
+if ($action === 'delete_page') {
+    $id = (int)($_POST['id'] ?? 0);
+    // Delete children photos first
+    $children = getChildrenByPage($pdo, $id);
+    foreach ($children as $child) {
+        foreach ($child['photos'] as $photo) {
+            $file = __DIR__ . '/uploads/' . $photo['filename'];
+            if (file_exists($file)) unlink($file);
+        }
+    }
+    $pdo->prepare("DELETE FROM pages WHERE id = ?")->execute([$id]);
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+// === Settings ===
+
+if ($action === 'save_settings') {
+    $pin = $_POST['pin_code'] ?? '';
+    if ($pin !== '') setSetting($pdo, 'pin_code', $pin);
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+// === Children ===
+
 if ($action === 'add_child') {
+    $pageId = (int)($_POST['page_id'] ?? 0);
     $name = trim($_POST['name'] ?? '');
     $age = (int)($_POST['age'] ?? 0);
     $height = (int)($_POST['height'] ?? 0);
     $params = trim($_POST['params'] ?? '');
 
-    if ($name === '' || $height <= 0) {
+    if ($name === '' || $height <= 0 || $pageId <= 0) {
         echo json_encode(['success' => false, 'error' => 'Заполните обязательные поля']);
         exit;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO children (name, age, height, params) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$name, $age, $height, $params]);
+    $stmt = $pdo->prepare("INSERT INTO children (page_id, name, age, height, params) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$pageId, $name, $age ?: null, $height, $params]);
     $childId = (int)$pdo->lastInsertId();
 
     if (!empty($_FILES['photos'])) {
@@ -113,7 +182,7 @@ if ($action === 'update_child') {
     }
 
     $pdo->prepare("UPDATE children SET name = ?, age = ?, height = ?, params = ? WHERE id = ?")
-        ->execute([$name, $age, $height, $params, $id]);
+        ->execute([$name, $age ?: null, $height, $params, $id]);
 
     if (!empty($_FILES['photos'])) {
         $files = $_FILES['photos'];
@@ -179,7 +248,7 @@ if ($action === 'reorder_child') {
         exit;
     }
 
-    $current = $pdo->prepare("SELECT id, sort_order FROM children WHERE id = ?");
+    $current = $pdo->prepare("SELECT id, sort_order, page_id FROM children WHERE id = ?");
     $current->execute([$id]);
     $currentChild = $current->fetch();
     if (!$currentChild) {
@@ -188,13 +257,14 @@ if ($action === 'reorder_child') {
     }
 
     $currentOrder = (int)$currentChild['sort_order'];
+    $pageId = (int)$currentChild['page_id'];
 
     if ($direction === 'up') {
-        $neighbor = $pdo->prepare("SELECT id, sort_order FROM children WHERE sort_order < ? ORDER BY sort_order DESC, id DESC LIMIT 1");
-        $neighbor->execute([$currentOrder]);
+        $neighbor = $pdo->prepare("SELECT id, sort_order FROM children WHERE page_id = ? AND sort_order < ? ORDER BY sort_order DESC, id DESC LIMIT 1");
+        $neighbor->execute([$pageId, $currentOrder]);
     } else {
-        $neighbor = $pdo->prepare("SELECT id, sort_order FROM children WHERE sort_order > ? ORDER BY sort_order ASC, id ASC LIMIT 1");
-        $neighbor->execute([$currentOrder]);
+        $neighbor = $pdo->prepare("SELECT id, sort_order FROM children WHERE page_id = ? AND sort_order > ? ORDER BY sort_order ASC, id ASC LIMIT 1");
+        $neighbor->execute([$pageId, $currentOrder]);
     }
 
     $neighborChild = $neighbor->fetch();
@@ -202,7 +272,6 @@ if ($action === 'reorder_child') {
     if ($neighborChild) {
         $neighborOrder = (int)$neighborChild['sort_order'];
         if ($neighborOrder === $currentOrder) {
-            // Same sort_order, assign distinct values
             if ($direction === 'up') {
                 $pdo->prepare("UPDATE children SET sort_order = sort_order - 1 WHERE id = ?")->execute([$id]);
             } else {
